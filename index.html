@@ -283,6 +283,23 @@ footer{border-top:1px solid var(--line);padding:38px 0 46px;background:rgba(3,7,
 .sticky-cta.show{transform:none}
 .sticky-cta .btn{width:100%;box-shadow:0 14px 40px -6px rgba(0,0,0,.8),0 10px 30px -8px rgba(29,140,248,.7)}
 
+/* Música de fondo (widget discreto) */
+.music-fab{position:fixed;right:16px;bottom:20px;z-index:130;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--panel-solid);border:1px solid var(--line-2);color:var(--em-2);box-shadow:0 10px 26px -8px rgba(0,0,0,.7);transition:transform .25s var(--ease),box-shadow .25s var(--ease),background .3s,color .3s}
+.music-fab svg{width:20px;height:20px}
+.music-fab:hover{transform:translateY(-2px);box-shadow:0 16px 34px -8px rgba(29,140,248,.55)}
+.music-fab.playing{color:#031225;background:var(--grad);border-color:transparent;box-shadow:0 0 0 6px rgba(34,211,238,.12),0 16px 34px -8px rgba(29,140,248,.7)}
+.music-panel{position:fixed;right:16px;bottom:78px;z-index:129;width:320px;max-width:calc(100vw - 32px);border-radius:var(--r-m);border:1px solid var(--line-2);background:var(--panel-solid);box-shadow:0 30px 60px -20px rgba(0,0,0,.75);overflow:hidden;opacity:0;transform:translateY(14px) scale(.97);pointer-events:none;transition:opacity .3s var(--ease),transform .35s var(--ease)}
+.music-panel.open{opacity:1;transform:none;pointer-events:auto}
+.music-panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 10px 10px 14px;border-bottom:1px solid var(--line);font-family:var(--f-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.music-panel-h span{display:inline-flex;align-items:center;gap:8px}
+.music-panel-h svg{width:15px;height:15px;color:var(--em-2)}
+.music-panel-body{min-height:60px}
+.music-panel-body iframe{display:block;width:100%;height:152px;border:0}
+@media(max-width:900px){
+  .music-fab{bottom:96px}
+  .music-panel{bottom:154px}
+}
+
 /* Visor de demos en vivo */
 .viewer{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:clamp(0px,2.4vw,28px)}
 .viewer.open{display:flex}
@@ -541,6 +558,7 @@ a.slide.cta:hover .go svg{transform:translateX(4px)}
     <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
   </defs>
 </svg>
 
@@ -844,6 +862,18 @@ a.slide.cta:hover .go svg{transform:translateX(4px)}
 </footer>
 
 <div class="sticky-cta" id="stickyCta"><a class="btn btn-primary" data-wa="sticky" href="https://wa.me/5493517548151?text=Hola%20Franco%2C%20vi%20tu%20portafolio%20y%20quiero%20agendar%20la%20reuni%C3%B3n%20de%2020%20minutos" target="_blank" rel="noopener">Agendá 20 minutos <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+
+<!-- MÚSICA DE FONDO (opcional, discreta) -->
+<button type="button" class="music-fab" id="musicFab" aria-label="Reproducir música de fondo" aria-pressed="false" title="Música de fondo">
+  <svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-music"/></svg>
+</button>
+<div class="music-panel" id="musicPanel" hidden>
+  <div class="music-panel-h">
+    <span><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-music"/></svg>Música de fondo</span>
+    <button type="button" class="v-icon" id="musicClose" aria-label="Cerrar"><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="music-panel-body" id="musicBody"></div>
+</div>
 
 <!-- VISOR DE DEMOS EN VIVO -->
 <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Demo en vivo" hidden>
@@ -1257,6 +1287,35 @@ a.slide.cta:hover .go svg{transform:translateX(4px)}
   });
 
   
+  /* ---------- Música de fondo (widget discreto) ---------- */
+  (function music() {
+    const fab = $("#musicFab"), panel = $("#musicPanel"), body = $("#musicBody"), close = $("#musicClose");
+    if (!fab || !panel) return;
+    let loaded = false;
+    function open() {
+      if (!loaded) {
+        const f = document.createElement("iframe");
+        f.src = "https://www.udio.com/embed/sZN28ampVQUYzVeGXaqP4k?embedVariant=default&utm_source=generator&autoplay=1";
+        f.allow = "encrypted-media; autoplay";
+        f.loading = "lazy";
+        body.appendChild(f);
+        loaded = true;
+      }
+      panel.hidden = false;
+      requestAnimationFrame(() => panel.classList.add("open"));
+      fab.classList.add("playing");
+      fab.setAttribute("aria-pressed", "true");
+    }
+    function close_() {
+      panel.classList.remove("open");
+      fab.classList.remove("playing");
+      fab.setAttribute("aria-pressed", "false");
+      setTimeout(() => { if (!panel.classList.contains("open")) panel.hidden = true; }, 350);
+    }
+    fab.addEventListener("click", () => { panel.classList.contains("open") ? close_() : open(); });
+    close && close.addEventListener("click", close_);
+  })();
+
 /* ---------- Fondo: red de nodos que se conectan ---------- */
   (function network() {
     const cv = $("#net"); if (!cv) return;
